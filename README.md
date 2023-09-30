@@ -53,4 +53,4 @@ Botão de pause - Green button
 
 ### Design (2 pts)
 
-![img](img/cubo.png)
+![img]('img/cubo.png')

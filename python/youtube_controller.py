@@ -1,14 +1,16 @@
-import pyautogui
 import serial
 import argparse
 import time
 import logging
+import pyvjoy # Windows apenas
 
 class MyControllerMap:
     def __init__(self):
-        self.button = {'A': 'L'} # Fast forward (10 seg) pro Youtube
+        self.button = {'A': 1}
+
 
 class SerialControllerInterface:
+
     # Protocolo
     # byte 1 -> Botão 1 (estado - Apertado 1 ou não 0)
     # byte 2 -> EOP - End of Packet -> valor reservado 'X'
@@ -16,9 +18,9 @@ class SerialControllerInterface:
     def __init__(self, port, baudrate):
         self.ser = serial.Serial(port, baudrate=baudrate)
         self.mapping = MyControllerMap()
+        self.j = pyvjoy.VJoyDevice(1)
         self.incoming = '0'
-        pyautogui.PAUSE = 0  ## remove delay
-    
+
     def update(self):
         ## Sync protocol
         while self.incoming != b'X':
@@ -29,11 +31,10 @@ class SerialControllerInterface:
         logging.debug("Received DATA: {}".format(data))
 
         if data == b'1':
-            logging.info("KEYDOWN A")
-            pyautogui.keyDown(self.mapping.button['A'])
+            logging.info("Sending press")
+            self.j.set_button(self.mapping.button['A'], 1)
         elif data == b'0':
-            logging.info("KEYUP A")
-            pyautogui.keyUp(self.mapping.button['A'])
+            self.j.set_button(self.mapping.button['A'], 0)
 
         self.incoming = self.ser.read()
 
@@ -41,11 +42,12 @@ class SerialControllerInterface:
 class DummyControllerInterface:
     def __init__(self):
         self.mapping = MyControllerMap()
+        self.j = pyvjoy.VJoyDevice(1)
 
     def update(self):
-        pyautogui.keyDown(self.mapping.button['A'])
+        self.j.set_button(self.mapping.button['A'], 1)
         time.sleep(0.1)
-        pyautogui.keyUp(self.mapping.button['A'])
+        self.j.set_button(self.mapping.button['A'], 0)
         logging.info("[Dummy] Pressed A button")
         time.sleep(1)
 
